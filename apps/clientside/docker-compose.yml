@@ -1,0 +1,58 @@
+version: '3'
+
+services:
+  web-app:
+    container_name: ahs-webapp-clientside-www
+    build:
+      context: ./nginx
+    ports:
+      - "8085:8085"
+    depends_on:
+      go-api:
+        condition: service_healthy
+    networks:
+      - derpnet
+    restart: always
+
+  go-api:
+    container_name: ahs-webapp-clientside-api
+    build:
+      context: ./go-api
+    ports:
+      - "8087:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - derpnet
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"] # Define the health check command
+      interval: 10s # How frequently to perform the health check
+      timeout: 5s  # Maximum time allowed for each check to run before considering it failed
+      retries: 3   # Number of consecutive failures needed to consider the container unhealthy
+    restart: always
+
+  postgres:
+    build:
+      context: ./postgres
+    restart: always
+    user: postgres
+    environment:
+      POSTGRES_USER: postgres 
+      POSTGRES_PASSWORD: password 
+      POSTGRES_DB: webapp
+    ports:
+      - "5439:5432"
+    volumes:
+      - ./postgres/init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - derpnet
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-U", "postgres", "-d", "hwtest"]
+      interval: 3s
+      timeout: 3s
+      retries: 3
+
+networks:
+  derpnet:
+

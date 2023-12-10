@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  web-app:
+    container_name: ahs-webapp-serverside-www
+    build:
+      context: ./app
+    ports:
+      - "5007:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ahsserversideweb
+    restart: always
+
+  postgres:
+    build:
+      context: ./postgres
+    restart: always
+    user: postgres
+    environment:
+      POSTGRES_USER: postgres 
+      POSTGRES_PASSWORD: password 
+      POSTGRES_DB: webapp
+    ports:
+      - "5439:5432"
+    volumes:
+      - ./postgres/init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - ahsserversideweb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-U", "postgres", "-d", "hwtest"]
+      interval: 3s
+      timeout: 3s
+      retries: 3
+
+networks:
+  ahsserversideweb:
+

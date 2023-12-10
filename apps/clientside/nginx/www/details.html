@@ -1,0 +1,73 @@
+<!-- item_details.html -->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Item Details</title>
+</head>
+
+<body>
+    <h1>Item Details</h1>
+    <div id="item-details"></div>
+    <a href="/" id="back-link">Back to Index</a>
+
+    <script>
+        // Function to extract item ID from query string
+        function getParameterByName(name, url) {
+            if (!url) {
+                url = window.location.href;
+            }
+            // make it URL safe
+            name = name.replace(/[\[\]]/g, "\\$&");
+            const regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)");
+            const results = regex.exec(url);
+            if (!results) {
+                return null;
+            }
+            if (!results[2]) {
+                return "";
+            }
+            return decodeURIComponent(results[2].replace(/\+/g, " "));
+        }
+
+        // Function to fetch and display item details
+        function fetchItemDetails() {
+            const itemID = getParameterByName("item_id");
+            if (!itemID) {
+                console.error("Item ID not provided in the query string.");
+                return;
+            }
+
+            fetch(`http://localhost:8087/items/${itemID}`)
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    const itemDetails = document.getElementById("item-details");
+                    itemDetails.innerHTML = `
+                        <h2>${data.name}</h2>
+                        <p>Quantity: ${data.quantity}</p>
+                        <p>Description: ${data.description}</p>
+                    `;
+                })
+                .catch((error) => {
+                    console.error("Error fetching item details:", error);
+                });
+        }
+
+        // Call the fetchItemDetails function to populate the details
+        fetchItemDetails();
+
+        // Back to Index link
+        const backLink = document.getElementById("back-link");
+        backLink.addEventListener("click", (event) => {
+            event.preventDefault();
+            window.location.href = "/";
+        });
+    </script>
+</body>
+
+</html>
